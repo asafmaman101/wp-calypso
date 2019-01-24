@@ -472,7 +472,7 @@ textarea {
 				background: $alert-yellow;
 			}
 			&.dot-red {
-				background: $alert-red;
+				background: var( --color-error );
 			}
 		}
 	}

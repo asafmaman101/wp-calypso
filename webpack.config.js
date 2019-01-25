@@ -19,6 +19,8 @@ const { BundleAnalyzerPlugin } = require( 'webpack-bundle-analyzer' );
 const TerserPlugin = require( 'terser-webpack-plugin' );
 const CircularDependencyPlugin = require( 'circular-dependency-plugin' );
 const DuplicatePackageCheckerPlugin = require( 'duplicate-package-checker-webpack-plugin' );
+const browserslist = require( 'browserslist' );
+const caniuse = require( 'caniuse-api' );
 
 /**
  * Internal dependencies
@@ -41,6 +43,10 @@ const shouldEmitStatsWithReasons = process.env.EMIT_STATS === 'withreasons';
 const shouldCheckForCycles = process.env.CHECK_CYCLES === 'true';
 const codeSplit = config.isEnabled( 'code-splitting' );
 const isCalypsoClient = process.env.CALYPSO_CLIENT === 'true';
+
+const browserslistEnvironment = 'defaults';
+const browsers = browserslist( null, { env: browserslistEnvironment } );
+process.env.BROWSERSLIST_ENV = browserslistEnvironment;
 
 /**
  * Plugin that generates the `public/custom-properties.css` file before compilation
@@ -153,6 +159,17 @@ const wordpressExternals = ( context, request, callback ) =>
 		? callback( null, `root ${ wordpressRequire( request ) }` )
 		: callback();
 
+function chooseTerserEcmaVersion( supportedBrowsers ) {
+	if ( ! caniuse.isSupported( 'arrow-functions', supportedBrowsers ) ) {
+		return 5;
+	}
+	if ( ! caniuse.isSupported( 'es6-class', supportedBrowsers ) ) {
+		return 5;
+	}
+
+	return 6;
+}
+
 /**
  * Return a webpack config object
  *
@@ -200,8 +217,11 @@ function getWebpackConfig( { cssFilename, externalizeWordPressPackages = false }
 					parallel: workerCount,
 					sourceMap: Boolean( process.env.SOURCEMAP ),
 					terserOptions: {
-						ecma: 5,
-						safari10: true,
+						ecma: chooseTerserEcmaVersion( browsers ),
+						ie8: browsers.includes( 'ie 8' ),
+						safari10: browsers.some(
+							browser => browser.includes( 'safari 10' ) || browser.includes( 'ios_saf 10' )
+						),
 					},
 				} ),
 			],

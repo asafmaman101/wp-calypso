@@ -40,7 +40,7 @@ $gray-lighten-30: #f6f6f6;
 	&__post-heading {
 		margin: 0.5rem 0;
 		font-size: 1rem;
-		line-height: 1.2rem;
+		line-height: 1.2em;
 	}
 
 	&__post-link {
@@ -55,6 +55,8 @@ $gray-lighten-30: #f6f6f6;
 	&__post-image-placeholder {
 		display: block;
 		position: relative;
+		margin: 0 auto;
+		max-width: 350px;
 		&-icon {
 			position: absolute;
 			top: calc( 50% - 12px );

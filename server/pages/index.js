@@ -269,6 +269,7 @@ function getDefaultContext( request ) {
 		store: createReduxStore( initialServerState ),
 		bodyClasses,
 		sectionCss,
+		isLoggedIn: !! request.cookies.wordpress_logged_in || !! request.get( 'x-support-session' ),
 	} );
 
 	context.app = {
@@ -351,9 +352,7 @@ function setUpLoggedInRoute( req, res, next ) {
 			redirectTo: protocol + '://' + config( 'hostname' ) + req.originalUrl,
 		} );
 
-		// if we don't have a wordpress cookie, we know the user needs to
-		// authenticate
-		if ( ! req.cookies.wordpress_logged_in ) {
+		if ( ! req.context.isLoggedIn ) {
 			debug( 'User not logged in. Redirecting to %s', redirectUrl );
 			res.redirect( redirectUrl );
 			return;
@@ -522,7 +521,7 @@ function setUpCSP( req, res, next ) {
 function setUpRoute( req, res, next ) {
 	req.context = getDefaultContext( req );
 	setUpCSP( req, res, () =>
-		req.cookies.wordpress_logged_in // a cookie probably indicates someone is logged-in
+		req.context.isLoggedIn
 			? setUpLoggedInRoute( req, res, next )
 			: setUpLoggedOutRoute( req, res, next )
 	);
@@ -639,7 +638,7 @@ module.exports = function() {
 
 	if ( process.env.NODE_ENV !== 'development' ) {
 		app.get( '/discover', function( req, res, next ) {
-			if ( ! req.cookies.wordpress_logged_in ) {
+			if ( ! req.context.isLoggedIn ) {
 				res.redirect( config( 'discover_logged_out_redirect_url' ) );
 			} else {
 				next();
@@ -648,7 +647,7 @@ module.exports = function() {
 
 		// redirect logged-out tag pages to en.wordpress.com
 		app.get( '/tag/:tag_slug', function( req, res, next ) {
-			if ( ! req.cookies.wordpress_logged_in ) {
+			if ( ! req.context.isLoggedIn ) {
 				res.redirect( 'https://en.wordpress.com/tag/' + encodeURIComponent( req.params.tag_slug ) );
 			} else {
 				next();
@@ -657,7 +656,7 @@ module.exports = function() {
 
 		// redirect logged-out searches to en.search.wordpress.com
 		app.get( '/read/search', function( req, res, next ) {
-			if ( ! req.cookies.wordpress_logged_in ) {
+			if ( ! req.context.isLoggedIn ) {
 				res.redirect( 'https://en.search.wordpress.com/?q=' + encodeURIComponent( req.query.q ) );
 			} else {
 				next();
@@ -665,7 +664,7 @@ module.exports = function() {
 		} );
 
 		app.get( '/plans', function( req, res, next ) {
-			if ( ! req.cookies.wordpress_logged_in ) {
+			if ( ! req.context.isLoggedIn ) {
 				const queryFor = req.query && req.query.for;
 				if ( queryFor && 'jetpack' === queryFor ) {
 					res.redirect(

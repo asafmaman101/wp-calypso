@@ -164,6 +164,10 @@ export function serverRender( req, res ) {
 			reduxSubtrees = cacheableReduxSubtrees;
 		}
 
+		if ( req.context.isSupportSession ) {
+			reduxSubtrees = reduxSubtrees.concat( 'support' );
+		}
+
 		// Send state to client
 		context.initialReduxState = pick( context.store.getState(), reduxSubtrees );
 
